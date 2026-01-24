@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isJames() {
+      return request.auth != null && request.auth.token.email == 'ptcgjamesc@gmail.com';
+    }
+    function isPartner() {
+      return request.auth != null && request.auth.token.email == 'datnumberguy20@gmail.com';
+    }
+    function isAuthorized() {
+      return isJames() || isPartner();
+    }
+
+    match /config/{document=**} {
+      allow read: if isAuthorized();
+      allow write: if isJames();
+    }
+
+    match /sessions/{document=**} {
+      allow read: if isAuthorized();
+      allow write: if isJames();
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
