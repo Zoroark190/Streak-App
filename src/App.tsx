@@ -9,7 +9,7 @@ import { SecondaryStats } from './components/SecondaryStats'
 import { SessionList } from './components/SessionList'
 import { SettingsPanel } from './components/SettingsPanel'
 
-function AppContent({ isJames }: { isJames: boolean }) {
+function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () => Promise<void> }) {
   const { config, loading: configLoading } = useConfig()
   const { sessions, openSession, loading: sessionsLoading } = useSessions()
 
@@ -54,10 +54,10 @@ function AppContent({ isJames }: { isJames: boolean }) {
         {/* Sign out button at the bottom */}
         <div className="text-center pt-4 pb-8">
           <button
-            onClick={() => window.location.reload()}
+            onClick={onSignOut}
             className="text-sm text-gray-500 underline hover:text-gray-700"
           >
-            Refresh
+            Sign Out
           </button>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function App() {
 
   return (
     <SignInGate auth={auth}>
-      <AppContent isJames={auth.isJames} />
+      <AppContent isJames={auth.isJames} onSignOut={auth.signOut} />
     </SignInGate>
   )
 }

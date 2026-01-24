@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   onAuthStateChanged,
+  signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
   getRedirectResult,
@@ -18,15 +19,25 @@ export interface AuthState {
   signOut: () => Promise<void>
 }
 
+function isMobile(): boolean {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+}
+
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for redirect result on mount
-    getRedirectResult(auth).catch(() => {
-      // Redirect result errors are non-fatal
-    })
+    // Handle redirect result for mobile sign-in
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(result.user)
+        }
+      })
+      .catch((error) => {
+        console.error('Redirect result error:', error)
+      })
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
@@ -42,7 +53,11 @@ export function useAuth(): AuthState {
   const isAuthorized = isJames || isPartner
 
   const signIn = async () => {
-    await signInWithRedirect(auth, googleProvider)
+    if (isMobile()) {
+      await signInWithRedirect(auth, googleProvider)
+    } else {
+      await signInWithPopup(auth, googleProvider)
+    }
   }
 
   const signOut = async () => {
