@@ -5,6 +5,8 @@ import {
   signInWithRedirect,
   signOut as firebaseSignOut,
   getRedirectResult,
+  browserLocalPersistence,
+  setPersistence,
   type User,
 } from 'firebase/auth'
 import { auth, googleProvider, JAMES_EMAIL, PARTNER_EMAIL } from '../lib/firebase'
@@ -19,10 +21,6 @@ export interface AuthState {
   signOut: () => Promise<void>
 }
 
-function isMobile(): boolean {
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-}
-
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -31,8 +29,14 @@ export function useAuth(): AuthState {
     let unsubscribe: () => void
 
     const init = async () => {
-      // Handle redirect result FIRST for mobile sign-in
-      // This must complete before we consider auth state resolved
+      // Set persistence to local storage (survives browser restarts)
+      try {
+        await setPersistence(auth, browserLocalPersistence)
+      } catch (error) {
+        console.error('Persistence error:', error)
+      }
+
+      // Handle redirect result for mobile sign-in
       try {
         const result = await getRedirectResult(auth)
         if (result?.user) {
@@ -42,7 +46,7 @@ export function useAuth(): AuthState {
         console.error('Redirect result error:', error)
       }
 
-      // Now set up the auth state listener
+      // Set up the auth state listener
       unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
         setUser(firebaseUser)
         setLoading(false)
@@ -64,10 +68,22 @@ export function useAuth(): AuthState {
   const isAuthorized = isJames || isPartner
 
   const signIn = async () => {
-    if (isMobile()) {
-      await signInWithRedirect(auth, googleProvider)
-    } else {
+    // Try popup first (works on most browsers including desktop)
+    // Fall back to redirect if popup is blocked (common on mobile)
+    try {
       await signInWithPopup(auth, googleProvider)
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string }
+      // Popup blocked or failed - use redirect instead
+      if (
+        firebaseError.code === 'auth/popup-blocked' ||
+        firebaseError.code === 'auth/popup-closed-by-user' ||
+        firebaseError.code === 'auth/cancelled-popup-request'
+      ) {
+        await signInWithRedirect(auth, googleProvider)
+      } else {
+        throw error
+      }
     }
   }
 
