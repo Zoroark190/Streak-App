@@ -28,23 +28,34 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Handle redirect result for mobile sign-in
-    getRedirectResult(auth)
-      .then((result) => {
+    let unsubscribe: () => void
+
+    const init = async () => {
+      // Handle redirect result FIRST for mobile sign-in
+      // This must complete before we consider auth state resolved
+      try {
+        const result = await getRedirectResult(auth)
         if (result?.user) {
           setUser(result.user)
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Redirect result error:', error)
+      }
+
+      // Now set up the auth state listener
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+        setUser(firebaseUser)
+        setLoading(false)
       })
+    }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser)
-      setLoading(false)
-    })
+    init()
 
-    return unsubscribe
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
   }, [])
 
   const email = user?.email ?? ''
