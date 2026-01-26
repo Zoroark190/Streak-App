@@ -351,6 +351,8 @@ Styling: Clean, minimal design focused on functionality.
 
 A primary Sign In / Sign Out card with a large button.
 
+When signed in: display live session duration timer (HH:MM:SS) below the Sign Out button.
+
 Core stats:
 
 Prominent “actual / expected” with red/green
@@ -464,6 +466,8 @@ Location denied → blocked with platform-specific instructions shown, "Try Agai
 If an open session exists from yesterday → it auto-closes with punishment rule on app load.
 
 Core stats match calculations (verify actual/expected hours, attendance, average stay).
+
+Session timer displays and updates every second when signed in.
 
 Settings unlock mechanism works, changes persist to Firestore.
 
