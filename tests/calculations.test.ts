@@ -19,6 +19,7 @@ function createSession(overrides: Partial<Session> = {}): Session {
     id: 'test-session',
     startTime: new Date('2024-01-15T09:00:00+01:00'),
     endTime: new Date('2024-01-15T17:00:00+01:00'),
+    savedTime: null,
     durationHours: 8,
     verification: {
       method: 'geolocation',
@@ -210,6 +211,17 @@ describe('calculateAutoCloseEndTime', () => {
     const endTime = calculateAutoCloseEndTime(session)
     const endDt = DateTime.fromJSDate(endTime).setZone(TIMEZONE)
     expect(endDt.hour).toBe(16)
+  })
+
+  it('should use savedTime when available instead of punishment', () => {
+    const savedTime = new Date('2024-01-15T16:00:00+01:00')
+    const session = createSession({
+      startTime: new Date('2024-01-15T09:00:00+01:00'),
+      endTime: null,
+      savedTime: savedTime,
+    })
+    const endTime = calculateAutoCloseEndTime(session)
+    expect(endTime.getTime()).toBe(savedTime.getTime())
   })
 })
 
