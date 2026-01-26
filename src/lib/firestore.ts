@@ -113,6 +113,7 @@ export async function createSession(
   await setDoc(newDocRef, {
     startTime: Timestamp.fromDate(startTime),
     endTime: null,
+    savedTime: null,
     durationHours: null,
     verification,
     createdAt: Timestamp.now(),
@@ -120,6 +121,17 @@ export async function createSession(
   })
 
   return newDocRef.id
+}
+
+/**
+ * Save a checkpoint time for a session.
+ */
+export async function saveSession(sessionId: string, savedTime: Date): Promise<void> {
+  const docRef = doc(db, 'sessions', sessionId)
+  await updateDoc(docRef, {
+    savedTime: Timestamp.fromDate(savedTime),
+    updatedAt: Timestamp.now(),
+  })
 }
 
 /**
@@ -152,6 +164,7 @@ export function subscribeToSessions(callback: (sessions: Session[]) => void): Un
         id: docSnap.id,
         startTime: (data.startTime as Timestamp).toDate(),
         endTime: data.endTime ? (data.endTime as Timestamp).toDate() : null,
+        savedTime: data.savedTime ? (data.savedTime as Timestamp).toDate() : null,
         durationHours: data.durationHours ?? null,
         verification: data.verification,
         createdAt: (data.createdAt as Timestamp).toDate(),
@@ -188,6 +201,7 @@ export function subscribeToOpenSession(callback: (session: Session | null) => vo
       id: docSnap.id,
       startTime: (data.startTime as Timestamp).toDate(),
       endTime: null,
+      savedTime: data.savedTime ? (data.savedTime as Timestamp).toDate() : null,
       durationHours: null,
       verification: data.verification,
       createdAt: (data.createdAt as Timestamp).toDate(),

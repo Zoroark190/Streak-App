@@ -14,6 +14,7 @@ export interface Session {
   id: string
   startTime: Date
   endTime: Date | null
+  savedTime: Date | null
   durationHours: number | null
   verification: {
     method: string
@@ -120,9 +121,14 @@ export function isStaleSession(session: Session): boolean {
 
 /**
  * Calculate the auto-close end time for a stale session.
- * Punishment rule: endTime = min(start + 2 hours, 23:59:59 of start day)
+ * If savedTime exists, use it (no punishment).
+ * Otherwise apply punishment rule: endTime = min(start + 2 hours, 23:59:59 of start day)
  */
 export function calculateAutoCloseEndTime(session: Session): Date {
+  if (session.savedTime) {
+    return session.savedTime
+  }
+
   const startDt = toAmsterdamDateTime(session.startTime).setZone(TIMEZONE)
   const startPlusTwoHours = startDt.plus({ hours: 2 })
   const endOfStartDay = endOfDay(startDt)

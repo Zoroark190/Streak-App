@@ -106,6 +106,8 @@ startTime (Firestore Timestamp)
 
 endTime (Firestore Timestamp | null)
 
+savedTime (Firestore Timestamp | null) - checkpoint time from Save button
+
 durationHours (number | null until closed)
 
 verification:
@@ -186,11 +188,14 @@ When active, log bypassed coordinates to console and show dev mode indicator in 
 
 6.1 Core rules
 
-Only JAMES_EMAIL can perform sign in/out.
+Only JAMES_EMAIL can perform sign in/out/save/end actions.
 
-If already signed in (open session exists): show Sign Out.
+If not signed in: show Sign In button (green).
 
-If not signed in: show Sign In.
+If already signed in (open session exists): show three buttons:
+- Save (blue, large) - records checkpoint time, requires location
+- Sign Out (red, small) - ends session normally, requires location
+- End (red, small) - ends session without location check
 
 6.2 Sign In flow
 
@@ -228,6 +233,38 @@ Update the open session with endTime, compute durationHours.
 
 Else: show error with distance + accuracy hint.
 
+6.3a Save flow
+
+User taps Save.
+
+Get geolocation.
+
+Compute distance.
+
+If within 1km:
+
+Update the session's savedTime = now()
+
+Display confirmation showing "Last saved: [time]"
+
+Else: show error with distance + accuracy hint.
+
+Purpose: Save acts as a checkpoint. If the user forgets to sign out, the savedTime will be used instead of the 2-hour punishment.
+
+6.3b End flow (no location required)
+
+User taps End.
+
+No geolocation check required.
+
+Calculate session duration as: max(savedTime - startTime, 2 hours)
+
+If no savedTime exists, default to 2 hours.
+
+Close the session with the calculated duration.
+
+Purpose: End allows closing a session when not at university (e.g., forgot to sign out). The savedTime checkpoint ensures fair credit if the user remembered to Save while at university.
+
 6.4 Session Duration Timer
 
 When signed in (open session exists), display a live timer below the Sign Out button showing elapsed time since sign-in.
@@ -246,13 +283,15 @@ Only visible when signed in
 
 Timer resets to 00:00:00 when a new session starts
 
-6.5 End-of-day auto-close punishment
+6.5 End-of-day auto-close
 
 If there is an open session from a past day:
 
-Close it as: assumedEnd = min(start + 2 hours, 23:59 of start day in Europe/Amsterdam)
+If savedTime exists: use savedTime as endTime (no punishment)
 
-Store endTime = assumedEnd and compute durationHours.
+If no savedTime: apply punishment rule: assumedEnd = min(start + 2 hours, 23:59 of start day in Europe/Amsterdam)
+
+Store endTime and compute durationHours.
 
 Trigger auto-close:
 
