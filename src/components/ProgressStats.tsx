@@ -59,9 +59,6 @@ export function ProgressStats({
         ></div>
       </div>
 
-      <p className="text-xs text-gray-500 mt-2 text-center">
-        {progressPercent.toFixed(0)}% of expected hours
-      </p>
     </div>
   )
 }
