@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGeolocation, type GeolocationErrorType } from '../hooks/useGeolocation'
 import { calculateDistance } from '../lib/geo'
 import { UNI_COORDS, ALLOWED_RADIUS_METERS, DEV_BYPASS_LOCATION } from '../lib/firebase'
@@ -25,9 +25,34 @@ export function CheckInCard({ openSession, isJames }: CheckInCardProps) {
   const { loading: geoLoading, getPosition } = useGeolocation()
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<ErrorState>(null)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   const loading = geoLoading || actionLoading
   const isSignedIn = openSession !== null
+
+  useEffect(() => {
+    if (!openSession) {
+      setElapsedSeconds(0)
+      return
+    }
+
+    const updateElapsed = () => {
+      const elapsed = Math.floor((Date.now() - openSession.startTime.getTime()) / 1000)
+      setElapsedSeconds(elapsed)
+    }
+
+    updateElapsed()
+    const interval = setInterval(updateElapsed, 1000)
+
+    return () => clearInterval(interval)
+  }, [openSession])
+
+  const formatElapsedTime = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
 
   const handleAction = async () => {
     setError(null)
@@ -121,6 +146,12 @@ export function CheckInCard({ openSession, isJames }: CheckInCardProps) {
             'Sign In'
           )}
         </button>
+
+        {isSignedIn && (
+          <p className="text-lg font-mono text-gray-600 mt-3">
+            {formatElapsedTime(elapsedSeconds)}
+          </p>
+        )}
 
         {!isJames && (
           <p className="text-sm text-gray-500 mt-2">View only - check-in not available</p>
