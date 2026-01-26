@@ -228,7 +228,25 @@ Update the open session with endTime, compute durationHours.
 
 Else: show error with distance + accuracy hint.
 
-6.4 End-of-day auto-close punishment
+6.4 Session Duration Timer
+
+When signed in (open session exists), display a live timer below the Sign Out button showing elapsed time since sign-in.
+
+Timer requirements:
+
+Format: HH:MM:SS (e.g., "02:45:32")
+
+Updates every second in real-time
+
+Uses clean sans-serif font with tabular numbers (no slashed zeros)
+
+Calculates elapsed time as: current time - session startTime
+
+Only visible when signed in
+
+Timer resets to 00:00:00 when a new session starts
+
+6.5 End-of-day auto-close punishment
 
 If there is an open session from a past day:
 
