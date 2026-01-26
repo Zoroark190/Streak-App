@@ -148,7 +148,7 @@ export function CheckInCard({ openSession, isJames }: CheckInCardProps) {
         </button>
 
         {isSignedIn && (
-          <p className="text-lg font-mono text-gray-600 mt-3">
+          <p className="text-2xl font-medium text-gray-700 mt-3 tabular-nums">
             {formatElapsedTime(elapsedSeconds)}
           </p>
         )}
