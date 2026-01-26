@@ -4,6 +4,7 @@ import { useSessions } from './hooks/useSessions'
 import { SignInGate } from './components/SignInGate'
 import { StartScreen } from './components/StartScreen'
 import { CheckInCard } from './components/CheckInCard'
+import { HoursGraph } from './components/HoursGraph'
 import { ProgressStats } from './components/ProgressStats'
 import { SecondaryStats } from './components/SecondaryStats'
 import { SessionList } from './components/SessionList'
@@ -31,6 +32,7 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Above the fold */}
         <CheckInCard openSession={openSession} isJames={isJames} />
+        <HoursGraph sessions={sessions} />
         <ProgressStats
           sessions={sessions}
           openSession={openSession}
