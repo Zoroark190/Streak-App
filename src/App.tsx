@@ -6,6 +6,7 @@ import { StartScreen } from './components/StartScreen'
 import { CheckInCard } from './components/CheckInCard'
 import { HoursGraph } from './components/HoursGraph'
 import { ProgressStats } from './components/ProgressStats'
+import { MonthlyGoal } from './components/MonthlyGoal'
 import { SecondaryStats } from './components/SecondaryStats'
 import { SessionList } from './components/SessionList'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -32,10 +33,15 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Above the fold */}
         <CheckInCard openSession={openSession} isJames={isJames} />
-        <HoursGraph sessions={sessions} />
+        <HoursGraph sessions={sessions} anchorISO={config.monthStartAnchorDateTime} />
         <ProgressStats
           sessions={sessions}
-          openSession={openSession}
+          anchorISO={config.monthStartAnchorDateTime}
+          dailyTargetHours={config.dailyTargetHours}
+          holidayExclusionsEnabled={config.holidayExclusionsEnabled}
+        />
+        <MonthlyGoal
+          sessions={sessions}
           anchorISO={config.monthStartAnchorDateTime}
           dailyTargetHours={config.dailyTargetHours}
           holidayExclusionsEnabled={config.holidayExclusionsEnabled}

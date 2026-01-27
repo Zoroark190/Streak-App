@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import { type Session } from './calculations'
 import { toAmsterdamDateTime, now } from './time'
 
@@ -35,13 +36,13 @@ function getOrdinalSuffix(day: number): string {
 }
 
 /**
- * Aggregate hours by day for the last 12 days.
- * Groups sessions by their start date (Amsterdam time).
- * Missing days show as 0 hours.
+ * Aggregate hours by day from anchor date to today.
+ * Shows up to 12 days, starting from anchor (not before setup date).
  */
-export function aggregateDailyHours(sessions: Session[]): GraphData {
+export function aggregateDailyHours(sessions: Session[], anchorISO: string): GraphData {
   const closed = getClosedSessions(sessions)
   const today = now().startOf('day')
+  const anchorDate = toAmsterdamDateTime(anchorISO).startOf('day')
 
   // Create map of date -> total hours
   const hoursByDate = new Map<string, number>()
@@ -53,10 +54,17 @@ export function aggregateDailyHours(sessions: Session[]): GraphData {
     hoursByDate.set(key, current + (session.durationHours ?? 0))
   }
 
-  // Generate last 12 days (oldest first for left-to-right)
+  // Calculate days from anchor to today
+  const daysSinceAnchor = Math.floor(today.diff(anchorDate, 'days').days) + 1
+  const daysToShow = Math.min(daysSinceAnchor, 12)
+
+  // Generate days from (today - daysToShow + 1) to today, but not before anchor
   const points: GraphDataPoint[] = []
-  for (let i = 11; i >= 0; i--) {
+  for (let i = daysToShow - 1; i >= 0; i--) {
     const date = today.minus({ days: i })
+    // Skip if before anchor
+    if (date < anchorDate) continue
+
     const key = date.toISODate()!
     const hours = hoursByDate.get(key) ?? 0
 
@@ -73,16 +81,13 @@ export function aggregateDailyHours(sessions: Session[]): GraphData {
 }
 
 /**
- * Aggregate hours by ISO week for the last 12 weeks.
- * Uses ISO week numbers (Monday start).
- * X-axis shows week start date.
+ * Aggregate hours by ISO week from anchor week to current week.
+ * Shows up to 12 weeks, starting from anchor (not before setup date).
  */
-export function aggregateWeeklyHours(sessions: Session[]): GraphData {
+export function aggregateWeeklyHours(sessions: Session[], anchorISO: string): GraphData {
   const closed = getClosedSessions(sessions)
-  const today = now()
-
-  // Get the Monday of the current week
-  const currentWeekStart = today.startOf('week')
+  const currentWeekStart = now().startOf('week')
+  const anchorWeekStart = toAmsterdamDateTime(anchorISO).startOf('week')
 
   // Create map of weekKey -> total hours
   const hoursByWeek = new Map<string, number>()
@@ -94,10 +99,17 @@ export function aggregateWeeklyHours(sessions: Session[]): GraphData {
     hoursByWeek.set(weekKey, current + (session.durationHours ?? 0))
   }
 
-  // Generate last 12 weeks (oldest first)
+  // Calculate weeks from anchor to current week
+  const weeksSinceAnchor = Math.floor(currentWeekStart.diff(anchorWeekStart, 'weeks').weeks) + 1
+  const weeksToShow = Math.min(weeksSinceAnchor, 12)
+
+  // Generate weeks from (current - weeksToShow + 1) to current, but not before anchor
   const points: GraphDataPoint[] = []
-  for (let i = 11; i >= 0; i--) {
+  for (let i = weeksToShow - 1; i >= 0; i--) {
     const weekStart = currentWeekStart.minus({ weeks: i })
+    // Skip if before anchor week
+    if (weekStart < anchorWeekStart) continue
+
     const weekKey = `${weekStart.weekYear}-W${weekStart.weekNumber.toString().padStart(2, '0')}`
     const hours = hoursByWeek.get(weekKey) ?? 0
 
@@ -114,34 +126,53 @@ export function aggregateWeeklyHours(sessions: Session[]): GraphData {
 }
 
 /**
- * Aggregate hours by month for the last 12 months.
- * X-axis shows 3-letter month abbreviation.
+ * Get the start of the anchor-based period that contains a given date.
+ * If date.day >= anchorDay, period started this month.
+ * If date.day < anchorDay, period started last month.
  */
-export function aggregateMonthlyHours(sessions: Session[]): GraphData {
-  const closed = getClosedSessions(sessions)
-  const today = now().startOf('month')
+function getPeriodStart(date: DateTime, anchorDay: number): DateTime {
+  if (date.day >= anchorDay) {
+    return date.set({ day: anchorDay }).startOf('day')
+  } else {
+    return date.minus({ months: 1 }).set({ day: anchorDay }).startOf('day')
+  }
+}
 
-  // Create map of monthKey -> total hours
-  const hoursByMonth = new Map<string, number>()
+/**
+ * Aggregate hours by anchor-based periods for 12 periods starting from anchor.
+ * If anchor is Jan 3rd: "Jan" = Jan 3 - Feb 2, "Feb" = Feb 3 - Mar 2, etc.
+ */
+export function aggregateMonthlyHours(sessions: Session[], anchorISO: string): GraphData {
+  const closed = getClosedSessions(sessions)
+  const anchor = toAmsterdamDateTime(anchorISO)
+  const anchorDay = anchor.day
+
+  // Create map of periodKey -> total hours
+  const hoursByPeriod = new Map<string, number>()
 
   for (const session of closed) {
     const sessionDt = toAmsterdamDateTime(session.startTime)
-    const monthKey = sessionDt.toFormat('yyyy-MM')
-    const current = hoursByMonth.get(monthKey) ?? 0
-    hoursByMonth.set(monthKey, current + (session.durationHours ?? 0))
+    // Determine which period this session belongs to
+    const periodStart = getPeriodStart(sessionDt, anchorDay)
+    const periodKey = periodStart.toFormat('yyyy-MM')
+    const current = hoursByPeriod.get(periodKey) ?? 0
+    hoursByPeriod.set(periodKey, current + (session.durationHours ?? 0))
   }
 
-  // Generate last 12 months (oldest first)
+  // Generate 12 periods starting from anchor
+  const firstPeriodStart = anchor.startOf('day')
   const points: GraphDataPoint[] = []
-  for (let i = 11; i >= 0; i--) {
-    const month = today.minus({ months: i })
-    const monthKey = month.toFormat('yyyy-MM')
-    const hours = hoursByMonth.get(monthKey) ?? 0
+
+  for (let i = 0; i < 12; i++) {
+    const periodStart = firstPeriodStart.plus({ months: i })
+    const periodKey = periodStart.toFormat('yyyy-MM')
+    const hours = hoursByPeriod.get(periodKey) ?? 0
+    const periodEnd = periodStart.plus({ months: 1 }).minus({ days: 1 })
 
     points.push({
-      label: month.toFormat('LLL'),
+      label: periodStart.toFormat('LLL'),
       hours: Math.round(hours * 10) / 10,
-      fullLabel: month.toFormat('LLLL yyyy'),
+      fullLabel: `${periodStart.toFormat('LLL d')} - ${periodEnd.toFormat('LLL d, yyyy')}`,
     })
   }
 
@@ -153,13 +184,13 @@ export function aggregateMonthlyHours(sessions: Session[]): GraphData {
 /**
  * Get graph data for the specified view mode.
  */
-export function getGraphData(sessions: Session[], viewMode: GraphViewMode): GraphData {
+export function getGraphData(sessions: Session[], viewMode: GraphViewMode, anchorISO: string): GraphData {
   switch (viewMode) {
     case 'daily':
-      return aggregateDailyHours(sessions)
+      return aggregateDailyHours(sessions, anchorISO)
     case 'weekly':
-      return aggregateWeeklyHours(sessions)
+      return aggregateWeeklyHours(sessions, anchorISO)
     case 'monthly':
-      return aggregateMonthlyHours(sessions)
+      return aggregateMonthlyHours(sessions, anchorISO)
   }
 }

@@ -17,14 +17,15 @@ import {
 
 interface HoursGraphProps {
   sessions: Session[]
+  anchorISO: string
 }
 
-export function HoursGraph({ sessions }: HoursGraphProps) {
+export function HoursGraph({ sessions, anchorISO }: HoursGraphProps) {
   const [viewMode, setViewMode] = useState<GraphViewMode>('daily')
 
   const graphData = useMemo(() => {
-    return getGraphData(sessions, viewMode)
-  }, [sessions, viewMode])
+    return getGraphData(sessions, viewMode, anchorISO)
+  }, [sessions, viewMode, anchorISO])
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">

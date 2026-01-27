@@ -37,40 +37,64 @@ export function calculateActualHours(sessions: Session[]): number {
 
 /**
  * Calculate expected hours so far in the current month period.
- *
- * Timing rule:
- * - If there's an open session today, count expected up to yesterday.
- * - Otherwise, include today if it's a weekday.
+ * Always includes today (if it's a weekday) from 00:00 onwards.
  */
 export function calculateExpectedHours(
   anchorISO: string,
   dailyTargetHours: number,
-  holidayExclusionsEnabled: boolean,
-  hasOpenSessionToday: boolean
+  holidayExclusionsEnabled: boolean
 ): number {
   const { start } = getMonthPeriod(anchorISO)
   const current = now()
 
-  // Determine the end date for counting
-  let countUpTo: DateTime
-  if (hasOpenSessionToday) {
-    // Don't include today
-    countUpTo = current.minus({ days: 1 })
-  } else {
-    countUpTo = current
-  }
-
   // Don't count before the period start
-  if (countUpTo < start) {
+  if (current < start) {
     return 0
   }
 
   const holidays = holidayExclusionsEnabled
-    ? getHolidaysInPeriod(start, countUpTo)
+    ? getHolidaysInPeriod(start, current)
     : []
 
-  const weekdays = countElapsedWeekdays(start, countUpTo, holidays)
+  const weekdays = countElapsedWeekdays(start, current, holidays)
   return weekdays * dailyTargetHours
+}
+
+/**
+ * Calculate total hours needed for the entire month period.
+ * Returns total weekdays × daily target (excluding holidays if enabled).
+ */
+export function calculateTotalMonthlyHours(
+  anchorISO: string,
+  dailyTargetHours: number,
+  holidayExclusionsEnabled: boolean
+): number {
+  const { start, end } = getMonthPeriod(anchorISO)
+  const holidays = holidayExclusionsEnabled
+    ? getHolidaysInPeriod(start, end)
+    : []
+  const totalWeekdays = countElapsedWeekdays(start, end, holidays)
+  return totalWeekdays * dailyTargetHours
+}
+
+/**
+ * Calculate remaining weekdays in the current month period.
+ */
+export function calculateRemainingWeekdays(
+  anchorISO: string,
+  holidayExclusionsEnabled: boolean
+): number {
+  const { end } = getMonthPeriod(anchorISO)
+  const current = now()
+
+  // Count from tomorrow to end of period
+  const tomorrow = current.plus({ days: 1 }).startOf('day')
+  if (tomorrow > end) return 0
+
+  const holidays = holidayExclusionsEnabled
+    ? getHolidaysInPeriod(tomorrow, end)
+    : []
+  return countElapsedWeekdays(tomorrow, end, holidays)
 }
 
 /**
