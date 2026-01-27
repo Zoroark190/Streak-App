@@ -127,6 +127,48 @@ export function calculateAverageStay(sessions: Session[]): number {
 }
 
 /**
+ * Calculate average start time across all closed sessions.
+ * Returns time in 12-hour format (e.g., "09:30 AM") or null if no sessions.
+ */
+export function calculateAverageStartTime(sessions: Session[]): string | null {
+  const closedSessions = sessions.filter(s => s.endTime !== null)
+  if (closedSessions.length === 0) return null
+
+  const totalMinutes = closedSessions.reduce((sum, s) => {
+    const dt = toAmsterdamDateTime(s.startTime)
+    return sum + (dt.hour * 60 + dt.minute)
+  }, 0)
+
+  const avgMinutes = Math.round(totalMinutes / closedSessions.length)
+  const hours24 = Math.floor(avgMinutes / 60)
+  const minutes = avgMinutes % 60
+  const period = hours24 >= 12 ? 'PM' : 'AM'
+  const hours12 = hours24 % 12 || 12
+  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+/**
+ * Calculate average end time across all closed sessions.
+ * Returns time in 12-hour format (e.g., "05:45 PM") or null if no sessions.
+ */
+export function calculateAverageEndTime(sessions: Session[]): string | null {
+  const closedSessions = sessions.filter(s => s.endTime !== null)
+  if (closedSessions.length === 0) return null
+
+  const totalMinutes = closedSessions.reduce((sum, s) => {
+    const dt = toAmsterdamDateTime(s.endTime!)
+    return sum + (dt.hour * 60 + dt.minute)
+  }, 0)
+
+  const avgMinutes = Math.round(totalMinutes / closedSessions.length)
+  const hours24 = Math.floor(avgMinutes / 60)
+  const minutes = avgMinutes % 60
+  const period = hours24 >= 12 ? 'PM' : 'AM'
+  const hours12 = hours24 % 12 || 12
+  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+/**
  * Check if actual hours are behind expected hours.
  */
 export function shouldBeRed(actualHours: number, expectedHours: number): boolean {
