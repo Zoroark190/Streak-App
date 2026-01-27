@@ -18,10 +18,11 @@ A single-page accountability web app for tracking university attendance with loc
 - Node.js 18+
 - npm
 - A Firebase project (see Firebase Setup below)
+Install these before proceeding
 
 ### Setup
 
-1. Clone the repository and install dependencies:
+1. Clone the repository and install the dependencies:
    ```bash
    npm install
    ```
