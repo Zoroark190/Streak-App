@@ -8,7 +8,7 @@ A single-page accountability web app for tracking university attendance with loc
 - Location-verified check-in/ out (1km radius from university)
 - Monthly progress tracking with expected vs real hours
 - Auto-close punishment for forgotten sign-outs
-- Settings with high-friction unlock mechanism
+- Settings with high-friction text unlock mechanism
 - Responsive design for Mac laptop and iPhone
 
 ## Local Development
