@@ -5,8 +5,8 @@ A single-page accountability web app for tracking university attendance with loc
 ## Features
 
 - Google Sign-In with email whitelist (2 users)
-- Location-verified check-in/out (1km radius from university)
-- Monthly progress tracking with expected vs actual hours
+- Location-verified check-in/ out (1km radius from university)
+- Monthly progress tracking with expected vs real hours
 - Auto-close punishment for forgotten sign-outs
 - Settings with high-friction unlock mechanism
 - Responsive design for Mac laptop and iPhone
