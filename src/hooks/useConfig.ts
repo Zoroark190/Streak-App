@@ -11,6 +11,10 @@ export function useConfig(): ConfigState {
     monthStartAnchorDateTime: null,
     dailyTargetHours: 7.5,
     holidayExclusionsEnabled: true,
+    mlWeeklyTargetHours: 20,
+    mlWeekStartAnchor: null,
+    mlLastPageMathML: 0,
+    mlLastPageProbML: 0,
   })
   const [loading, setLoading] = useState(true)
 

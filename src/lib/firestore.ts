@@ -18,6 +18,11 @@ export interface AppConfig {
   monthStartAnchorDateTime: string | null
   dailyTargetHours: number
   holidayExclusionsEnabled: boolean
+  // ML Learning fields
+  mlWeeklyTargetHours: number
+  mlWeekStartAnchor: string | null
+  mlLastPageMathML: number
+  mlLastPageProbML: number
 }
 
 const CONFIG_DOC_PATH = 'config/app'
@@ -34,6 +39,10 @@ export async function getConfig(): Promise<AppConfig> {
       monthStartAnchorDateTime: null,
       dailyTargetHours: 7.5,
       holidayExclusionsEnabled: true,
+      mlWeeklyTargetHours: 20,
+      mlWeekStartAnchor: null,
+      mlLastPageMathML: 0,
+      mlLastPageProbML: 0,
     }
   }
 
@@ -42,6 +51,10 @@ export async function getConfig(): Promise<AppConfig> {
     monthStartAnchorDateTime: data.monthStartAnchorDateTime ?? null,
     dailyTargetHours: data.dailyTargetHours ?? 7.5,
     holidayExclusionsEnabled: data.holidayExclusionsEnabled ?? true,
+    mlWeeklyTargetHours: data.mlWeeklyTargetHours ?? 20,
+    mlWeekStartAnchor: data.mlWeekStartAnchor ?? null,
+    mlLastPageMathML: data.mlLastPageMathML ?? 0,
+    mlLastPageProbML: data.mlLastPageProbML ?? 0,
   }
 }
 
@@ -56,6 +69,10 @@ export function subscribeToConfig(callback: (config: AppConfig) => void): Unsubs
         monthStartAnchorDateTime: null,
         dailyTargetHours: 7.5,
         holidayExclusionsEnabled: true,
+        mlWeeklyTargetHours: 20,
+        mlWeekStartAnchor: null,
+        mlLastPageMathML: 0,
+        mlLastPageProbML: 0,
       })
       return
     }
@@ -65,6 +82,10 @@ export function subscribeToConfig(callback: (config: AppConfig) => void): Unsubs
       monthStartAnchorDateTime: data.monthStartAnchorDateTime ?? null,
       dailyTargetHours: data.dailyTargetHours ?? 7.5,
       holidayExclusionsEnabled: data.holidayExclusionsEnabled ?? true,
+      mlWeeklyTargetHours: data.mlWeeklyTargetHours ?? 20,
+      mlWeekStartAnchor: data.mlWeekStartAnchor ?? null,
+      mlLastPageMathML: data.mlLastPageMathML ?? 0,
+      mlLastPageProbML: data.mlLastPageProbML ?? 0,
     })
   })
 }
