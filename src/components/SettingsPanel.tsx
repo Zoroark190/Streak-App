@@ -1,22 +1,26 @@
 import { useState } from 'react'
 import { updateConfig } from '../lib/firestore'
+import { updateMLConfig } from '../lib/mlFirestore'
 
 interface SettingsPanelProps {
   dailyTargetHours: number
   holidayExclusionsEnabled: boolean
   isJames: boolean
+  mlWeeklyTargetHours?: number
 }
 
 export function SettingsPanel({
   dailyTargetHours,
   holidayExclusionsEnabled,
   isJames,
+  mlWeeklyTargetHours = 20,
 }: SettingsPanelProps) {
   const [unlocked, setUnlocked] = useState(false)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [unlockInput, setUnlockInput] = useState('')
   const [targetHours, setTargetHours] = useState(dailyTargetHours)
   const [holidays, setHolidays] = useState(holidayExclusionsEnabled)
+  const [mlTargetHours, setMlTargetHours] = useState(mlWeeklyTargetHours)
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
@@ -35,6 +39,9 @@ export function SettingsPanel({
       await updateConfig({
         dailyTargetHours: targetHours,
         holidayExclusionsEnabled: holidays,
+      })
+      await updateMLConfig({
+        mlWeeklyTargetHours: mlTargetHours,
       })
       setSaveStatus('success')
       setTimeout(() => setSaveStatus('idle'), 3000)
@@ -97,6 +104,24 @@ export function SettingsPanel({
             <label htmlFor="holidays" className="text-sm text-gray-700">
               Exclude holidays (Dec 25, Jan 1)
             </label>
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <p className="text-sm font-medium text-gray-700 mb-3">ML Learning Settings</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Weekly Target Hours
+              </label>
+              <input
+                type="number"
+                value={mlTargetHours}
+                onChange={(e) => setMlTargetHours(parseFloat(e.target.value) || 0)}
+                step="0.5"
+                min="0"
+                max="100"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-app-blue focus:border-transparent"
+              />
+            </div>
           </div>
 
           <button
