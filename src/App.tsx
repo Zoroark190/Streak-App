@@ -14,6 +14,7 @@ import { SessionList } from './components/SessionList'
 import { SettingsPanel } from './components/SettingsPanel'
 import { TabNavigation, type TabType } from './components/TabNavigation'
 import { MLLearningCard } from './components/ml/MLLearningCard'
+import { MLHoursGraph } from './components/ml/MLHoursGraph'
 import { MLWeeklyGoal } from './components/ml/MLWeeklyGoal'
 import { MLSessionList } from './components/ml/MLSessionList'
 
@@ -84,6 +85,10 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
               isJames={isJames}
               lastPageMathML={config.mlLastPageMathML}
               lastPageProbML={config.mlLastPageProbML}
+              mlWeekStartAnchor={config.mlWeekStartAnchor}
+            />
+            <MLHoursGraph
+              mlSessions={mlSessions}
               mlWeekStartAnchor={config.mlWeekStartAnchor}
             />
             <MLWeeklyGoal
