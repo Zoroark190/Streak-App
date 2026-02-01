@@ -91,6 +91,34 @@ export function getDaysLeftInWeek(weekStartAnchor: string): number {
 }
 
 /**
+ * Calculate average hours per day for completed days in the current week.
+ * Only includes days before today (not including today).
+ * Returns null if no completed days yet (first day of week).
+ */
+export function calculateMLWeeklyAverage(sessions: MLSession[], weekStartAnchor: string): number | null {
+  const { start } = getWeekPeriod(weekStartAnchor)
+  const weekStartDay = start.startOf('day')
+  const today = now().startOf('day')
+
+  // Calculate complete days elapsed before today
+  const daysElapsed = Math.floor(today.diff(weekStartDay, 'days').days)
+
+  // If it's the first day of the week, no previous days to average
+  if (daysElapsed <= 0) return null
+
+  // Get sessions from week start up to (but not including) today
+  const totalHours = sessions
+    .filter(s => {
+      if (s.endTime === null || s.durationHours === null) return false
+      const sessionStart = toAmsterdamDateTime(s.startTime)
+      return sessionStart >= weekStartDay && sessionStart < today
+    })
+    .reduce((sum, s) => sum + (s.durationHours ?? 0), 0)
+
+  return totalHours / daysElapsed
+}
+
+/**
  * Determine if the user is behind schedule for their weekly ML goal.
  * Returns true if they need to catch up (should show red).
  */
@@ -133,4 +161,81 @@ export function getMLSessionsLast7Days(sessions: MLSession[]): MLSession[] {
  */
 export function formatDurationHours(hours: number): string {
   return hours.toFixed(1)
+}
+
+/**
+ * Group closed ML sessions by date and sum hours per day.
+ * Returns a Map of ISO date string -> total hours for that day.
+ */
+function getHoursByDay(sessions: MLSession[]): Map<string, number> {
+  const hoursByDay = new Map<string, number>()
+
+  for (const session of sessions) {
+    if (session.endTime === null || session.durationHours === null) continue
+
+    const dateKey = toAmsterdamDateTime(session.startTime).toISODate()!
+    const current = hoursByDay.get(dateKey) ?? 0
+    hoursByDay.set(dateKey, current + session.durationHours)
+  }
+
+  return hoursByDay
+}
+
+/**
+ * Calculate overall daily average for days with at least 0.5 hours.
+ * Returns null if no qualifying days.
+ */
+export function calculateMLOverallDailyAverage(sessions: MLSession[]): number | null {
+  const hoursByDay = getHoursByDay(sessions)
+
+  // Filter to days with at least 0.5 hours
+  const qualifyingDays: number[] = []
+  for (const hours of hoursByDay.values()) {
+    if (hours >= 0.5) {
+      qualifyingDays.push(hours)
+    }
+  }
+
+  if (qualifyingDays.length === 0) return null
+
+  const totalHours = qualifyingDays.reduce((sum, h) => sum + h, 0)
+  return totalHours / qualifyingDays.length
+}
+
+/**
+ * Calculate average hours per day over the last 7 days.
+ * Total hours in last 7 days divided by 7.
+ */
+export function calculateMLLast7DayAverage(sessions: MLSession[]): number {
+  const sevenDaysAgo = now().minus({ days: 7 }).startOf('day')
+
+  const totalHours = sessions
+    .filter(s => {
+      if (s.endTime === null || s.durationHours === null) return false
+      const sessionStart = toAmsterdamDateTime(s.startTime)
+      return sessionStart >= sevenDaysAgo
+    })
+    .reduce((sum, s) => sum + (s.durationHours ?? 0), 0)
+
+  return totalHours / 7
+}
+
+/**
+ * Calculate average hours per day for the current calendar month.
+ * Total hours this month divided by days elapsed in the month.
+ */
+export function calculateMLThisMonthAverage(sessions: MLSession[]): number {
+  const current = now()
+  const monthStart = current.startOf('month')
+  const daysElapsed = Math.floor(current.diff(monthStart, 'days').days) + 1
+
+  const totalHours = sessions
+    .filter(s => {
+      if (s.endTime === null || s.durationHours === null) return false
+      const sessionStart = toAmsterdamDateTime(s.startTime)
+      return sessionStart >= monthStart
+    })
+    .reduce((sum, s) => sum + (s.durationHours ?? 0), 0)
+
+  return totalHours / daysElapsed
 }

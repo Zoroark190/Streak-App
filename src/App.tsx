@@ -16,6 +16,7 @@ import { TabNavigation, type TabType } from './components/TabNavigation'
 import { MLLearningCard } from './components/ml/MLLearningCard'
 import { MLHoursGraph } from './components/ml/MLHoursGraph'
 import { MLWeeklyGoal } from './components/ml/MLWeeklyGoal'
+import { MLSecondaryStats } from './components/ml/MLSecondaryStats'
 import { MLSessionList } from './components/ml/MLSessionList'
 
 function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () => Promise<void> }) {
@@ -96,6 +97,7 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
               mlWeekStartAnchor={config.mlWeekStartAnchor}
               mlWeeklyTargetHours={config.mlWeeklyTargetHours}
             />
+            <MLSecondaryStats mlSessions={mlSessions} mlWeeklyTargetHours={config.mlWeeklyTargetHours} />
             <MLSessionList mlSessions={mlSessions} />
             <SettingsPanel
               dailyTargetHours={config.dailyTargetHours}
