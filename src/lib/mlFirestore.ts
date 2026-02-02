@@ -97,6 +97,7 @@ export async function closeMLSession(
     pageProbML: number
     notes: string | null
     durationHours: number
+    pausedDuration: number
   }
 ): Promise<void> {
   const docRef = doc(db, 'mlSessions', sessionId)
@@ -106,6 +107,7 @@ export async function closeMLSession(
     pageProbML: endData.pageProbML,
     notes: endData.notes,
     durationHours: endData.durationHours,
+    pausedDuration: endData.pausedDuration,
     isPaused: false,
     currentPauseStart: null,
     updatedAt: Timestamp.now(),

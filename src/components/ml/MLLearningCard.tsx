@@ -119,6 +119,7 @@ export function MLLearningCard({
     pageMathML: number
     pageProbML: number
     notes: string | null
+    changeTimeMinutes: number | null
   }) => {
     if (!openMLSession) return
     setActionLoading(true)
@@ -132,7 +133,16 @@ export function MLLearningCard({
         pausedMs += endTime.getTime() - openMLSession.currentPauseStart.getTime()
       }
 
-      const activeMs = Math.max(0, totalElapsed - pausedMs)
+      let activeMs = Math.max(0, totalElapsed - pausedMs)
+
+      // If user provided a custom duration, adjust the paused time
+      if (data.changeTimeMinutes !== null) {
+        const customActiveMs = data.changeTimeMinutes * 60 * 1000
+        const additionalPauseMs = activeMs - customActiveMs
+        pausedMs += additionalPauseMs
+        activeMs = customActiveMs
+      }
+
       const durationHours = activeMs / (1000 * 60 * 60)
 
       await closeMLSession(openMLSession.id, {
@@ -141,6 +151,7 @@ export function MLLearningCard({
         pageProbML: data.pageProbML,
         notes: data.notes,
         durationHours,
+        pausedDuration: pausedMs,
       })
 
       // Update last page numbers in config
@@ -262,6 +273,7 @@ export function MLLearningCard({
           lastPageMathML={lastPageMathML}
           lastPageProbML={lastPageProbML}
           loading={actionLoading}
+          elapsedSeconds={elapsedSeconds}
         />
       )}
     </>
