@@ -21,6 +21,16 @@ service cloud.firestore {
       allow write: if isJames();
     }
 
+    match /mlSessions/{document=**} {
+      allow read: if isAuthorized();
+      allow write: if isJames();
+    }
+
+    match /calendarEntries/{document=**} {
+      allow read: if isAuthorized();
+      allow write: if isJames();
+    }
+
     // Deny everything else
     match /{document=**} {
       allow read, write: if false;

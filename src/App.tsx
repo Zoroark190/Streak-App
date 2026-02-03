@@ -18,6 +18,7 @@ import { MLHoursGraph } from './components/ml/MLHoursGraph'
 import { MLWeeklyGoal } from './components/ml/MLWeeklyGoal'
 import { MLSecondaryStats } from './components/ml/MLSecondaryStats'
 import { MLSessionList } from './components/ml/MLSessionList'
+import { CalendarView } from './components/calendar'
 
 function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () => Promise<void> }) {
   const [activeTab, setActiveTab] = useState<TabType>('university')
@@ -99,6 +100,19 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
             />
             <MLSecondaryStats mlSessions={mlSessions} mlWeeklyTargetHours={config.mlWeeklyTargetHours} />
             <MLSessionList mlSessions={mlSessions} />
+            <SettingsPanel
+              dailyTargetHours={config.dailyTargetHours}
+              holidayExclusionsEnabled={config.holidayExclusionsEnabled}
+              isJames={isJames}
+              mlWeeklyTargetHours={config.mlWeeklyTargetHours}
+            />
+          </>
+        )}
+
+        {/* Calendar Tab Content */}
+        {activeTab === 'calendar' && (
+          <>
+            <CalendarView isJames={isJames} />
             <SettingsPanel
               dailyTargetHours={config.dailyTargetHours}
               holidayExclusionsEnabled={config.holidayExclusionsEnabled}
