@@ -2,17 +2,17 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   subscribeToCalendarMonth,
   updateCalendarDay,
-  type DayValue,
+  type DayCheckboxes,
 } from '../lib/calendarFirestore'
 
 export interface CalendarEntriesState {
-  entries: Record<string, DayValue>
+  entries: Record<string, DayCheckboxes>
   loading: boolean
-  updateDay: (day: number, value: DayValue) => Promise<void>
+  updateDay: (day: number, checkboxes: DayCheckboxes) => Promise<void>
 }
 
 export function useCalendarEntries(year: number, month: number): CalendarEntriesState {
-  const [entries, setEntries] = useState<Record<string, DayValue>>({})
+  const [entries, setEntries] = useState<Record<string, DayCheckboxes>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export function useCalendarEntries(year: number, month: number): CalendarEntries
   }, [year, month])
 
   const updateDay = useCallback(
-    async (day: number, value: DayValue) => {
-      await updateCalendarDay(year, month, day, value)
+    async (day: number, checkboxes: DayCheckboxes) => {
+      await updateCalendarDay(year, month, day, checkboxes)
     },
     [year, month]
   )

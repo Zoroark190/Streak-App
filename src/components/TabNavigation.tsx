@@ -1,4 +1,4 @@
-export type TabType = 'university' | 'ml'
+export type TabType = 'university' | 'ml' | 'calendar'
 
 interface TabNavigationProps {
   activeTab: TabType
@@ -28,6 +28,16 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
           }`}
         >
           ML Learning
+        </button>
+        <button
+          onClick={() => onTabChange('calendar')}
+          className={`flex-1 py-3 text-center font-semibold transition-colors ${
+            activeTab === 'calendar'
+              ? 'text-app-blue border-b-2 border-app-blue bg-blue-50'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Calendar
         </button>
       </div>
     </div>

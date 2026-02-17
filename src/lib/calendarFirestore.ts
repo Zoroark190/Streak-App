@@ -9,16 +9,51 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 
-// Value meanings: -1=white/none, 0=green, 1=red, 2=dark red
-export type DayValue = -1 | 0 | 1 | 2
+export interface DayCheckboxes {
+  reading: boolean
+  gym: boolean
+  called: boolean
+  ml: boolean
+  uni: boolean
+  n: boolean
+}
+
+export const DEFAULT_CHECKBOXES: DayCheckboxes = {
+  reading: false,
+  gym: false,
+  called: false,
+  ml: false,
+  uni: false,
+  n: false,
+}
 
 export interface CalendarMonthData {
-  entries: Record<string, DayValue>
+  entries: Record<string, DayCheckboxes>
   updatedAt: Date
+}
+
+/**
+ * Calculate the score for a day based on its checkboxes.
+ * Score = count of main 5 checked - (N ? 1 : 0)
+ * Range: -1 to 5
+ */
+export function calculateDayScore(checkboxes: DayCheckboxes): number {
+  const mainCount = [
+    checkboxes.reading,
+    checkboxes.gym,
+    checkboxes.called,
+    checkboxes.ml,
+    checkboxes.uni,
+  ].filter(Boolean).length
+  return mainCount - (checkboxes.n ? 1 : 0)
 }
 
 function getDocId(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}`
+}
+
+function isValidDayCheckboxes(value: unknown): value is DayCheckboxes {
+  return typeof value === 'object' && value !== null && 'reading' in value
 }
 
 /**
@@ -40,14 +75,23 @@ export function subscribeToCalendarMonth(
         return
       }
       const data = snap.data()
+      const rawEntries = data.entries ?? {}
+
+      // Filter out old numeric entries (backward compatibility)
+      const entries: Record<string, DayCheckboxes> = {}
+      for (const [key, value] of Object.entries(rawEntries)) {
+        if (isValidDayCheckboxes(value)) {
+          entries[key] = value
+        }
+      }
+
       callback({
-        entries: data.entries ?? {},
+        entries,
         updatedAt: data.updatedAt?.toDate() ?? new Date(),
       })
     },
     (error) => {
       console.error('Error subscribing to calendar month:', error)
-      // Return empty entries so loading completes
       callback({ entries: {}, updatedAt: new Date() })
       if (onError) {
         onError(error)
@@ -57,27 +101,27 @@ export function subscribeToCalendarMonth(
 }
 
 /**
- * Update a single day's value in the calendar.
+ * Update a single day's checkboxes in the calendar.
  */
 export async function updateCalendarDay(
   year: number,
   month: number,
   day: number,
-  value: DayValue
+  checkboxes: DayCheckboxes
 ): Promise<void> {
   const docRef = doc(db, 'calendarEntries', getDocId(year, month))
   const snap = await getDoc(docRef)
 
+  const allFalse = Object.values(checkboxes).every(v => !v)
+
   if (!snap.exists()) {
-    // Create document if it doesn't exist
     await setDoc(docRef, {
-      entries: value === -1 ? {} : { [String(day)]: value },
+      entries: allFalse ? {} : { [String(day)]: checkboxes },
       updatedAt: Timestamp.now(),
     })
   } else {
-    // Update existing document
-    if (value === -1) {
-      // Remove entry for white (saves storage)
+    if (allFalse) {
+      // Remove entry when all unchecked (saves storage)
       const currentEntries = { ...(snap.data().entries ?? {}) }
       delete currentEntries[String(day)]
       await updateDoc(docRef, {
@@ -86,7 +130,7 @@ export async function updateCalendarDay(
       })
     } else {
       await updateDoc(docRef, {
-        [`entries.${day}`]: value,
+        [`entries.${day}`]: checkboxes,
         updatedAt: Timestamp.now(),
       })
     }

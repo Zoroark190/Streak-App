@@ -22,7 +22,6 @@ import { CalendarView } from './components/calendar'
 
 function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () => Promise<void> }) {
   const [activeTab, setActiveTab] = useState<TabType>('university')
-  const [showCalendar, setShowCalendar] = useState(false)
   const { config, loading: configLoading } = useConfig()
   const { sessions, openSession, loading: sessionsLoading } = useSessions()
   const { mlSessions, openMLSession, loading: mlLoading } = useMLSessions()
@@ -43,26 +42,11 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
   return (
     <div className="min-h-screen bg-app-bg">
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Tab Navigation - visible when not showing calendar */}
-        {!showCalendar && (
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-        )}
-
-        {/* Calendar View */}
-        {showCalendar && (
-          <>
-            <CalendarView isJames={isJames} />
-            <SettingsPanel
-              dailyTargetHours={config.dailyTargetHours}
-              holidayExclusionsEnabled={config.holidayExclusionsEnabled}
-              isJames={isJames}
-              mlWeeklyTargetHours={config.mlWeeklyTargetHours}
-            />
-          </>
-        )}
+        {/* Tab Navigation */}
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* University Sign-In Tab Content */}
-        {!showCalendar && activeTab === 'university' && (
+        {activeTab === 'university' && (
           <>
             {/* Above the fold */}
             <CheckInCard openSession={openSession} isJames={isJames} />
@@ -96,7 +80,7 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
         )}
 
         {/* ML Learning Tab Content */}
-        {!showCalendar && activeTab === 'ml' && (
+        {activeTab === 'ml' && (
           <>
             <MLLearningCard
               openMLSession={openMLSession}
@@ -125,17 +109,22 @@ function AppContent({ isJames, onSignOut }: { isJames: boolean; onSignOut: () =>
           </>
         )}
 
-        {/* Calendar button at the bottom */}
-        <button
-          onClick={() => setShowCalendar(!showCalendar)}
-          className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-            showCalendar
-              ? 'bg-app-blue text-white'
-              : 'bg-white text-gray-600 shadow-lg hover:bg-gray-50'
-          }`}
-        >
-          {showCalendar ? 'Back to Dashboard' : 'Calendar'}
-        </button>
+        {/* Calendar Tab Content */}
+        {activeTab === 'calendar' && (
+          <>
+            <CalendarView
+              isJames={isJames}
+              sessions={sessions}
+              mlSessions={mlSessions}
+            />
+            <SettingsPanel
+              dailyTargetHours={config.dailyTargetHours}
+              holidayExclusionsEnabled={config.holidayExclusionsEnabled}
+              isJames={isJames}
+              mlWeeklyTargetHours={config.mlWeeklyTargetHours}
+            />
+          </>
+        )}
 
         {/* Sign out button at the bottom */}
         <div className="text-center pt-4 pb-8">

@@ -3,13 +3,17 @@ import { useCalendarEntries } from '../../hooks/useCalendarEntries'
 import { CalendarHeader } from './CalendarHeader'
 import { CalendarGrid } from './CalendarGrid'
 import { now } from '../../lib/time'
-import type { DayValue } from '../../lib/calendarFirestore'
+import type { DayCheckboxes } from '../../lib/calendarFirestore'
+import type { Session } from '../../lib/calculations'
+import type { MLSession } from '../../lib/mlFirestore'
 
 interface CalendarViewProps {
   isJames: boolean
+  sessions: Session[]
+  mlSessions: MLSession[]
 }
 
-export function CalendarView({ isJames }: CalendarViewProps) {
+export function CalendarView({ isJames, sessions, mlSessions }: CalendarViewProps) {
   const today = now()
   const [selectedYear, setSelectedYear] = useState(today.year)
   const [selectedMonth, setSelectedMonth] = useState(today.month)
@@ -34,9 +38,9 @@ export function CalendarView({ isJames }: CalendarViewProps) {
     }
   }
 
-  const handleDayClick = async (day: number, newValue: DayValue) => {
+  const handleDayUpdate = async (day: number, checkboxes: DayCheckboxes) => {
     try {
-      await updateDay(day, newValue)
+      await updateDay(day, checkboxes)
     } catch (err) {
       console.error('Failed to update calendar day:', err)
     }
@@ -57,11 +61,14 @@ export function CalendarView({ isJames }: CalendarViewProps) {
         </div>
       ) : (
         <CalendarGrid
+          key={`${selectedYear}-${selectedMonth}`}
           year={selectedYear}
           month={selectedMonth}
           entries={entries}
-          onDayClick={handleDayClick}
+          onDayUpdate={handleDayUpdate}
           isJames={isJames}
+          sessions={sessions}
+          mlSessions={mlSessions}
         />
       )}
 
