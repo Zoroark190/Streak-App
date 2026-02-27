@@ -27,6 +27,7 @@ export function SettingsPanel({
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [resetting, setResetting] = useState(false)
   const [resetStatus, setResetStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
 
   const handleUnlockAttempt = () => {
     if (unlockInput.toUpperCase() === 'UNLOCK') {
@@ -165,13 +166,35 @@ export function SettingsPanel({
             <p className="text-xs text-gray-500 mb-3">
               Sets today as the start of the current University month period and ML week. Existing session data is kept.
             </p>
-            <button
-              onClick={handleResetAnchors}
-              disabled={resetting}
-              className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
-            >
-              {resetting ? 'Resetting...' : 'Reset Anchors to Today'}
-            </button>
+            {!showResetConfirm ? (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                Reset Anchors to Today
+              </button>
+            ) : (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800 mb-3">
+                  Are you sure? Both the University month period and ML week will restart from today.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { setShowResetConfirm(false); handleResetAnchors() }}
+                    disabled={resetting}
+                    className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 text-sm disabled:opacity-50"
+                  >
+                    {resetting ? 'Resetting...' : 'Yes, reset'}
+                  </button>
+                </div>
+              </div>
+            )}
             {resetStatus === 'success' && (
               <p className="text-sm text-green-600 text-center mt-2">Anchors reset to today!</p>
             )}
