@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { updateConfig } from '../lib/firestore'
+import { DateTime } from 'luxon'
+import { updateConfig, setMonthAnchor } from '../lib/firestore'
 import { updateMLConfig } from '../lib/mlFirestore'
+import { TIMEZONE } from '../lib/time'
 
 interface SettingsPanelProps {
   dailyTargetHours: number
@@ -23,12 +25,31 @@ export function SettingsPanel({
   const [mlTargetHours, setMlTargetHours] = useState(mlWeeklyTargetHours)
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [resetting, setResetting] = useState(false)
+  const [resetStatus, setResetStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   const handleUnlockAttempt = () => {
     if (unlockInput.toUpperCase() === 'UNLOCK') {
       setUnlocked(true)
       setShowUnlockModal(false)
       setUnlockInput('')
+    }
+  }
+
+  const handleResetAnchors = async () => {
+    setResetting(true)
+    setResetStatus('idle')
+    try {
+      const todayAms = DateTime.now().setZone(TIMEZONE).startOf('day')
+      await setMonthAnchor(todayAms.toISO()!)
+      await updateMLConfig({ mlWeekStartAnchor: todayAms.toISODate()! })
+      setResetStatus('success')
+      setTimeout(() => setResetStatus('idle'), 3000)
+    } catch (err) {
+      console.error('Failed to reset anchors:', err)
+      setResetStatus('error')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -138,6 +159,26 @@ export function SettingsPanel({
           {saveStatus === 'error' && (
             <p className="text-sm text-red-600 text-center">Failed to save. Try again.</p>
           )}
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <p className="text-sm font-medium text-gray-700 mb-2">Reset Period Anchors</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Sets today as the start of the current University month period and ML week. Existing session data is kept.
+            </p>
+            <button
+              onClick={handleResetAnchors}
+              disabled={resetting}
+              className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+            >
+              {resetting ? 'Resetting...' : 'Reset Anchors to Today'}
+            </button>
+            {resetStatus === 'success' && (
+              <p className="text-sm text-green-600 text-center mt-2">Anchors reset to today!</p>
+            )}
+            {resetStatus === 'error' && (
+              <p className="text-sm text-red-600 text-center mt-2">Failed to reset. Try again.</p>
+            )}
+          </div>
         </div>
       )}
 
